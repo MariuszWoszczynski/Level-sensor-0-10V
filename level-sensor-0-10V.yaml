@@ -1,0 +1,109 @@
+dashboard_import:
+  package_import_url: github://MariuszWoszczynski/Level-sensor-0-10V/level-sensor-0-10V.yaml@main
+  import_full_config: true
+ 
+substitutions:
+  name: czujnik-poziomu-wody
+  friendly_name: Czujnik poziomu wody
+
+  
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  project:
+    name: esphome.czujnik_poziomu_wody
+    version: "1.0"
+ 
+esp32:
+  board: nodemcu-32s
+  framework:
+    type: arduino
+
+
+# Enable logging
+logger:
+  level: debug
+ 
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "6Tz9DyVBEE6so8tSDphjTNWXIMkmyCJb/LrMRsNtIjU="
+
+ota:
+  - platform: esphome
+    password: "42cddcd0706042a64903a598a8d3c32b"
+
+time:
+ - platform: sntp
+   id: time_sntp
+
+wifi:
+  ssid: "Woszu_IoT"
+  password: "8181818181"
+  power_save_mode: LIGHT
+  fast_connect: true
+  reboot_timeout: 10min
+  output_power: 18dB
+#  static IP configuration (instead of data from the secret file)
+#  manual_ip:
+#    static_ip: 192.168.10.219
+#    gateway: 192.168.10.1
+#    subnet: 255.255.255.0
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Czujnik-Poziomu-Wody"
+    password: "IGZ4uHLfJVYY"
+
+captive_portal:
+
+web_server: 
+  port: 80
+#  auth:
+#    username: !secret web_server_username              # your web server username
+#    password: !secret web_server_password              # your web server password
+ 
+
+sensor:
+  - platform: adc
+    pin: GPIO35
+    name: "Poziom wody [V]"
+    id: adc_voltage
+    update_interval: 1s
+    accuracy_decimals: 2
+    attenuation: auto
+    unit_of_measurement: "V"
+    filters:
+    - multiply: 3.333
+    - clamp:
+        min_value: 0
+        max_value: 10
+        ignore_out_of_range: true
+    - median:
+        window_size: 5
+        send_every: 5
+        send_first_at: 1
+
+  - platform: copy
+    source_id: adc_voltage
+    name: "Poziom wody %"
+    accuracy_decimals: 1
+    icon: "mdi:water-percent"
+    unit_of_measurement: "%"
+    filters:
+    - calibrate_linear:
+      - 0.25 -> 0.0                               # 0%
+      - 10.0 -> 100.0                             # 100%
+    - round: 0
+  
+  - platform: copy
+    source_id: adc_voltage
+    name: "Poziom wody [m]"
+    accuracy_decimals: 2
+    icon: "mdi:waves-arrow-up"
+    unit_of_measurement: "m"
+    filters:
+    - calibrate_linear:
+      - 0.25 -> 0.00                                # for 0%
+      - 10.0 -> 2.50                                # for 100%
+    - round: 2
