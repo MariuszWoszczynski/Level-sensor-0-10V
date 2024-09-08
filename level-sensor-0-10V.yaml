@@ -38,8 +38,8 @@ time:
    id: time_sntp
 
 wifi:
-  ssid: "Woszu_IoT"
-  password: "8181818181"
+  ssid: "XXXXXXX"
+  password: "XXXXXXXXXXXXXXX"
   power_save_mode: LIGHT
   fast_connect: true
   reboot_timeout: 10min
