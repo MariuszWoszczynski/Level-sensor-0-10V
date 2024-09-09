@@ -62,27 +62,26 @@ web_server:
 #  auth:
 #    username: !secret web_server_username              # your web server username
 #    password: !secret web_server_password              # your web server password
- 
 
 sensor:
   - platform: adc
     pin: GPIO35
     name: "Poziom wody [V]"
     id: adc_voltage
-    update_interval: 1s
+    update_interval: 60s                   # częstotliwość odczytu danych
     accuracy_decimals: 2
     attenuation: auto
     unit_of_measurement: "V"
     filters:
-    - multiply: 3.333
-    - clamp:
+    - multiply: 3.333                     # mnożnik napięcia
+    - clamp:                              # ograniczenie wartości min i max
         min_value: 0
         max_value: 10
         ignore_out_of_range: true
-    - median:
-        window_size: 5
-        send_every: 5
-        send_first_at: 1
+    - median:                             # uśrednianie wyników (stabilizacja odczytu)
+        window_size: 15  
+        send_every: 15
+        send_first_at: 15
 
   - platform: copy
     source_id: adc_voltage
@@ -91,9 +90,12 @@ sensor:
     icon: "mdi:water-percent"
     unit_of_measurement: "%"
     filters:
-    - calibrate_linear:
-      - 0.25 -> 0.0                               # 0%
-      - 10.0 -> 100.0                             # 100%
+    - clamp:                              # ograniczenie wartości min i max
+       min_value: 0
+       max_value: 4.0
+    - calibrate_linear:                   # kalibracja %
+      - 0 -> 0.0                          # 0% przy 0V
+      - 4.0 -> 100.0                      # 100% przy 4V
     - round: 0
   
   - platform: copy
@@ -102,8 +104,8 @@ sensor:
     accuracy_decimals: 2
     icon: "mdi:waves-arrow-up"
     unit_of_measurement: "m"
-    filters:
-    - calibrate_linear:
-      - 0.25 -> 0.00                                # for 0%
-      - 10.0 -> 2.50                                # for 100%
+    filters: 
+    - calibrate_linear:                   # kalibracja [m]
+      - 0 -> 0.00                         # 0m przy 0V
+      - 10.0 -> 5.00                      # 5m przy 10V
     - round: 2
